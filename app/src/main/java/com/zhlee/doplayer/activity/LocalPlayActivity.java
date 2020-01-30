@@ -26,7 +26,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class VideoActivity extends AppCompatActivity {
+public class LocalPlayActivity extends AppCompatActivity {
 
     @BindView(R.id.rv_video)
     RecyclerView rvVideo;
@@ -35,7 +35,7 @@ public class VideoActivity extends AppCompatActivity {
     private PagerSnapHelper snapHelper;
     private LinearLayoutManager layoutManager;
     private int currentPosition;
-    private VideoActivity act;
+    private LocalPlayActivity act;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +68,7 @@ public class VideoActivity extends AppCompatActivity {
         File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Video/");
         urlList = ScanUtil.getVideoList(file);
         Collections.sort(urlList);
+        Collections.reverse(urlList);
 
         snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(rvVideo);

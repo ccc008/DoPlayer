@@ -1,25 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <Button
-        android:id="@+id/btn_start"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="启动下载" />
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/btn_stop"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="暂停下载" />
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="启动下载" />
 
-    <Button
-        android:id="@+id/btn_open"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="启动播放" />
+        <Button
+            android:id="@+id/btn_stop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="暂停下载" />
 
-</LinearLayout>
+        <Button
+            android:id="@+id/btn_clear_db"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="清空数据库" />
+
+        <Button
+            android:id="@+id/btn_clear_all"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="清空全部" />
+
+        <Button
+            android:id="@+id/btn_open_local"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="本地播放" />
+
+        <Button
+            android:id="@+id/btn_open_online"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="在线播放" />
+    </LinearLayout>
+</ScrollView>

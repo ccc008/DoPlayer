@@ -1,6 +1,7 @@
 package com.zhlee.doplayer.activity;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -21,8 +22,11 @@ import android.widget.Toast;
 
 import com.zhlee.doplayer.R;
 import com.zhlee.doplayer.bean.VideoBean;
+import com.zhlee.doplayer.utils.FileUtils;
 import com.zhlee.doplayer.utils.LogUtil;
 import com.zhlee.doplayer.utils.StringUtils;
+import com.zhlee.doplayer.utils.ThreadUtil;
+import com.zhlee.doplayer.utils.ToastUtils;
 import com.zhlee.doplayer.utils.XCallBack;
 import com.zhlee.doplayer.utils.XDownLoadCallBack;
 import com.zhlee.doplayer.utils.XUtils;
@@ -41,13 +45,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button btnStart;
     @BindView(R.id.btn_stop)
     Button btnStop;
-    @BindView(R.id.btn_open)
-    Button btnOpen;
+    @BindView(R.id.btn_clear_db)
+    Button btnClearDb;
+    @BindView(R.id.btn_clear_all)
+    Button btnClearAll;
+    @BindView(R.id.btn_open_local)
+    Button btnOpenLocal;
+    @BindView(R.id.btn_open_online)
+    Button btnOpenOnline;
 
     // 要申请的权限
     private String[] permissions = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE};
     //权限数组下标
     //权限申请返回码
@@ -66,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // 标记下载状态及是否继续下载
     private boolean isDownloading = false;
+    private ProgressDialog pd;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -84,7 +94,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initListener() {
         btnStart.setOnClickListener(this);
         btnStop.setOnClickListener(this);
-        btnOpen.setOnClickListener(this);
+        btnOpenLocal.setOnClickListener(this);
+        btnClearDb.setOnClickListener(this);
+        btnClearAll.setOnClickListener(this);
+        btnOpenOnline.setOnClickListener(this);
     }
 
     private void initData() {
@@ -95,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         act = this;
         ButterKnife.bind(this);
         xUtils = XUtils.getInstance();
+        pd = new ProgressDialog(act);
     }
 
     private void getVideoUrl() {
@@ -273,9 +287,76 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 isDownloading = false;
                 LogUtil.log("取消下载,,,");
                 break;
-            case R.id.btn_open:
-                startActivity(new Intent(act, VideoActivity.class));
+            case R.id.btn_clear_db:
+                LogUtil.log("清空数据库...");
+                showClearDbDialog();
+                break;
+            case R.id.btn_clear_all:
+                LogUtil.log("清空数据库及文件...");
+                showClearAllDialog();
+                break;
+            case R.id.btn_open_local:
+                LogUtil.log("启动本地播放...");
+                startActivity(new Intent(act, LocalPlayActivity.class));
+                break;
+            case R.id.btn_open_online:
+                LogUtil.log("启动在线播放...");
+                ToastUtils.showToast(act,"暂未开放!");
                 break;
         }
     }
+
+    private void showClearDbDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(act);
+        builder.setTitle("警告");
+        builder.setMessage("你确定要清空数据库么？");
+        builder.setPositiveButton("确定", (dialogInterface, i) -> {
+            DataSupport.deleteAll(VideoBean.class);
+            LogUtil.log("已清空数据库!");
+            ToastUtils.showToast(act, "已清空数据库!");
+        });
+        builder.setNegativeButton("取消", (dialogInterface, i) -> {
+
+        });
+        builder.show();
+    }
+
+    private void showClearAllDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(act);
+        builder.setTitle("警告");
+        builder.setMessage("你确定要清空数据库及文件么？");
+        builder.setPositiveButton("确定", (dialogInterface, i) -> {
+            // 开始清空文件 显示进度框
+            showProgressDialog("标题", "正在清空数据...");
+            ThreadUtil.runOnBackThread(() -> {
+                DataSupport.deleteAll(VideoBean.class);
+                LogUtil.log("已清空数据库!");
+                FileUtils.deleteFile(new File(DOWNLOAD_DIR));
+                LogUtil.log("已清空文件!");
+                ThreadUtil.runOnUIThread(() -> {
+                    // 清空文件成功 隐藏进度框
+                    dismissProgressDialog();
+                    ToastUtils.showToast(act, "已清空数据库及文件!");
+                });
+            });
+        });
+        builder.setNegativeButton("取消", (dialogInterface, i) -> {
+
+        });
+        builder.show();
+    }
+
+    private void showProgressDialog(String title, String content) {
+        pd.setTitle(title);
+        pd.setMessage(content);
+        pd.setCancelable(false);
+        pd.show();
+    }
+
+    private void dismissProgressDialog() {
+        if (pd != null && pd.isShowing() && act != null) {
+            pd.dismiss();
+        }
+    }
+
 }
