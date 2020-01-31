@@ -1,5 +1,6 @@
 package com.zhlee.doplayer.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -36,6 +37,8 @@ public class LocalPlayActivity extends AppCompatActivity {
     private LinearLayoutManager layoutManager;
     private int currentPosition;
     private LocalPlayActivity act;
+    // 播放顺序
+    private String playKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,12 +48,21 @@ public class LocalPlayActivity extends AppCompatActivity {
         setContentView(R.layout.activity_video);
         // 初始化前的一些准备
         initFirst();
+        // 初始化Intent
+        initIntent();
         // 初始化数据
         initData();
         // 初始化控件
         initView();
         // 注册监听
         initListener();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        initIntent();
     }
 
     private void initWindowTab() {
@@ -63,12 +75,32 @@ public class LocalPlayActivity extends AppCompatActivity {
         ButterKnife.bind(this);
     }
 
+    private void initIntent() {
+        Intent intent = getIntent();
+        if (intent != null) {
+            playKey = intent.getStringExtra(Const.PLAY_ORDER_KEY);
+        }
+    }
 
     private void initView() {
         File file = new File(Const.DOWNLOAD_DIR);
         urlList = ScanUtil.getVideoList(file);
-        Collections.sort(urlList);
-        Collections.reverse(urlList);
+
+        if (Const.PLAY_ORDER_ASC.equalsIgnoreCase(playKey)) {
+            // 正序播放
+            Collections.sort(urlList);
+        } else if (Const.PLAY_ORDER_DESC.equalsIgnoreCase(playKey)) {
+            // 倒序播放
+            Collections.sort(urlList);
+            Collections.reverse(urlList);
+        } else if (Const.PLAY_ORDER_SHUFFLE.equalsIgnoreCase(playKey)) {
+            // 随机播放
+            Collections.shuffle(urlList);
+        } else {
+            // 默认倒序播放
+            Collections.sort(urlList);
+            Collections.reverse(urlList);
+        }
 
         snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(rvVideo);

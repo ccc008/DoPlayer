@@ -49,8 +49,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button btnClearDb;
     @BindView(R.id.btn_clear_all)
     Button btnClearAll;
-    @BindView(R.id.btn_open_local)
-    Button btnOpenLocal;
+    @BindView(R.id.btn_open_local_desc)
+    Button btnOpenLocalDesc;
+    @BindView(R.id.btn_open_local_asc)
+    Button btnOpenLocalAsc;
+    @BindView(R.id.btn_open_local_shuffle)
+    Button btnOpenLocalShuffle;
     @BindView(R.id.btn_open_online)
     Button btnOpenOnline;
 
@@ -88,7 +92,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initListener() {
         btnStart.setOnClickListener(this);
         btnStop.setOnClickListener(this);
-        btnOpenLocal.setOnClickListener(this);
+        btnOpenLocalDesc.setOnClickListener(this);
+        btnOpenLocalAsc.setOnClickListener(this);
+        btnOpenLocalShuffle.setOnClickListener(this);
         btnClearDb.setOnClickListener(this);
         btnClearAll.setOnClickListener(this);
         btnOpenOnline.setOnClickListener(this);
@@ -289,9 +295,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 LogUtil.log("清空数据库及文件...");
                 showClearAllDialog();
                 break;
-            case R.id.btn_open_local:
-                LogUtil.log("启动本地播放...");
-                startActivity(new Intent(act, LocalPlayActivity.class));
+            case R.id.btn_open_local_desc:
+                LogUtil.log("启动本地播放-倒序...");
+                Intent intentDesc = new Intent(act, LocalPlayActivity.class);
+                intentDesc.putExtra(Const.PLAY_ORDER_KEY, Const.PLAY_ORDER_DESC);
+                startActivity(intentDesc);
+                break;
+            case R.id.btn_open_local_asc:
+                LogUtil.log("启动本地播放-正序...");
+                Intent intentAsc = new Intent(act, LocalPlayActivity.class);
+                intentAsc.putExtra(Const.PLAY_ORDER_KEY, Const.PLAY_ORDER_ASC);
+                startActivity(intentAsc);
+                break;
+            case R.id.btn_open_local_shuffle:
+                LogUtil.log("启动本地播放-随机...");
+                Intent intentShuffle = new Intent(act, LocalPlayActivity.class);
+                intentShuffle.putExtra(Const.PLAY_ORDER_KEY, Const.PLAY_ORDER_SHUFFLE);
+                startActivity(intentShuffle);
                 break;
             case R.id.btn_open_online:
                 LogUtil.log("启动在线播放...");

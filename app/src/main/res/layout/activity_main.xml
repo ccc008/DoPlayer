@@ -34,10 +34,22 @@
             android:text="清空全部" />
 
         <Button
-            android:id="@+id/btn_open_local"
+            android:id="@+id/btn_open_local_desc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="本地播放" />
+            android:text="本地播放-倒序" />
+
+        <Button
+            android:id="@+id/btn_open_local_asc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="本地播放-正序" />
+
+        <Button
+            android:id="@+id/btn_open_local_shuffle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="本地播放-随机" />
 
         <Button
             android:id="@+id/btn_open_online"
