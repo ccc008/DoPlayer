@@ -301,7 +301,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_open_online:
                 LogUtil.log("启动在线播放...");
-                ToastUtils.showToast(act,"暂未开放!");
+                startActivity(new Intent(act, OnlinePlayActivity.class));
                 break;
         }
     }

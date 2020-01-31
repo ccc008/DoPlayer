@@ -3,6 +3,7 @@ package com.zhlee.doplayer.base;
 import android.content.Context;
 
 import com.danikula.videocache.HttpProxyCacheServer;
+import com.zhlee.doplayer.utils.CrashHandler;
 import com.zhlee.doplayer.view.DoFileNameGenerator;
 
 import org.litepal.LitePalApplication;
@@ -37,5 +38,8 @@ public class DoApplication extends LitePalApplication {
         super.onCreate();
         // 初始化xUtils3.0
         x.Ext.init(this);
+        // 初始化崩溃日志收集工具
+        CrashHandler crashHandler = CrashHandler.getInstance();
+        crashHandler.init(this);
     }
 }

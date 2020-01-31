@@ -6,6 +6,7 @@ import android.util.Log;
 
 import org.json.JSONObject;
 import org.xutils.common.Callback;
+import org.xutils.http.HttpMethod;
 import org.xutils.http.RequestParams;
 import org.xutils.x;
 
@@ -45,7 +46,7 @@ public class XUtils {
      * @param maps     参数
      * @param callBack 回调
      */
-    public void get(String url, Map<String, String> headers, Map<String, String> maps, final XCallBack callBack) {
+    public Callback.Cancelable get(String url, Map<String, String> headers, Map<String, String> maps, final XCallBack callBack) {
         RequestParams params = new RequestParams(url);
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
@@ -57,7 +58,54 @@ public class XUtils {
                 params.addQueryStringParameter(entry.getKey(), entry.getValue());
             }
         }
-        x.http().get(params, new Callback.CommonCallback<String>() {
+        return x.http().get(params, new Callback.CommonCallback<String>() {
+            @Override
+            public void onSuccess(String result) {
+                onSuccessResponse(result, callBack);
+            }
+
+            @Override
+            public void onError(Throwable ex, boolean isOnCallback) {
+                ex.printStackTrace();
+                handler.post(() -> {
+                    if (callBack != null) {
+                        callBack.onError(ex);
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(CancelledException cex) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
+    }
+
+    /**
+     * 仅请求 不下载
+     * @param url      请求地址
+     * @param headers  头
+     * @param maps     参数
+     * @param callBack 回调
+     */
+    public void head(String url, Map<String, String> headers, Map<String, String> maps, final XCallBack callBack) {
+        RequestParams params = new RequestParams(url);
+        if (headers != null && !headers.isEmpty()) {
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                params.addHeader(header.getKey(), header.getValue());
+            }
+        }
+        if (maps != null && !maps.isEmpty()) {
+            for (Map.Entry<String, String> entry : maps.entrySet()) {
+                params.addQueryStringParameter(entry.getKey(), entry.getValue());
+            }
+        }
+        x.http().request(HttpMethod.HEAD,params, new Callback.CommonCallback<String>() {
             @Override
             public void onSuccess(String result) {
                 onSuccessResponse(result, callBack);

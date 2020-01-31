@@ -54,9 +54,7 @@ public abstract class BaseRecAdapter<T, K extends BaseRecViewHolder> extends Rec
 
     @Override
     public void onBindViewHolder(K holder, int position) {
-
         onHolder(holder, list.get(position), position);
-
     }
 
 
@@ -64,7 +62,6 @@ public abstract class BaseRecAdapter<T, K extends BaseRecViewHolder> extends Rec
     public int getItemCount() {
         return list == null ? 0 : list.size();
     }
-
 
     /**
      * 填充数据
@@ -74,9 +71,7 @@ public abstract class BaseRecAdapter<T, K extends BaseRecViewHolder> extends Rec
      */
     public abstract void onHolder(K holder, T bean, int position);
 
-
     public abstract K onCreateHolder();
-
 
     /**
      * 通过资源res获得view
@@ -104,9 +99,7 @@ public abstract class BaseRecAdapter<T, K extends BaseRecViewHolder> extends Rec
      * @param holder
      */
     private void bindListener(final K holder) {
-
         if (holder == null) {
-
             return;
         }
         View itemView = holder.itemView;
@@ -133,20 +126,15 @@ public abstract class BaseRecAdapter<T, K extends BaseRecViewHolder> extends Rec
                 }
             });
         }
-
     }
-
 
     public interface onItemClickListener {
         void onItemClick(BaseRecAdapter adapter, View view, int position);
-
-
     }
 
     public interface OnItemLongClickListener {
         boolean onItemLongClick(BaseRecAdapter adapter, View view, int position);
     }
-
 
     public void setNewData(List<T> lt) {
         if (list == null) {
