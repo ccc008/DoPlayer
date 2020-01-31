@@ -1,7 +1,6 @@
 package com.zhlee.doplayer.activity;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
@@ -16,6 +15,7 @@ import com.bumptech.glide.Glide;
 import com.zhlee.doplayer.R;
 import com.zhlee.doplayer.base.BaseRecAdapter;
 import com.zhlee.doplayer.base.BaseRecViewHolder;
+import com.zhlee.doplayer.utils.Const;
 import com.zhlee.doplayer.utils.ScanUtil;
 import com.zhlee.doplayer.view.DoVideoPlayer;
 
@@ -65,7 +65,7 @@ public class LocalPlayActivity extends AppCompatActivity {
 
 
     private void initView() {
-        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Video/");
+        File file = new File(Const.DOWNLOAD_DIR);
         urlList = ScanUtil.getVideoList(file);
         Collections.sort(urlList);
         Collections.reverse(urlList);

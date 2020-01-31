@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -22,6 +21,7 @@ import android.widget.Toast;
 
 import com.zhlee.doplayer.R;
 import com.zhlee.doplayer.bean.VideoBean;
+import com.zhlee.doplayer.utils.Const;
 import com.zhlee.doplayer.utils.FileUtils;
 import com.zhlee.doplayer.utils.LogUtil;
 import com.zhlee.doplayer.utils.StringUtils;
@@ -63,12 +63,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int requestCodePre = 321;
     //系统设置权限申请返回码
     private int requestCodeSer = 123;
-
-    // 请求地址
-    public static final String DO_URL = "https://iapp.ddccs.net/api.php";
-    // 视频存储地址
-    public static final String DOWNLOAD_DIR = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Video/";
-
 
     private MainActivity act;
     private XUtils xUtils;
@@ -113,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void getVideoUrl() {
         if (isDownloading) {
-            xUtils.get(DO_URL, null, null, new XCallBack() {
+            xUtils.get(Const.DO_URL, null, null, new XCallBack() {
                 @Override
                 public void onResponse(String result) {
                     // 解析结果 获取视频地址
@@ -146,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void downloadVideo(String url) {
-        xUtils.download(url, DOWNLOAD_DIR, new XDownLoadCallBack() {
+        xUtils.download(url, Const.DOWNLOAD_DIR, new XDownLoadCallBack() {
             @Override
             public void onSuccess(File result) {
                 LogUtil.log("视频下载完成!");
@@ -331,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ThreadUtil.runOnBackThread(() -> {
                 DataSupport.deleteAll(VideoBean.class);
                 LogUtil.log("已清空数据库!");
-                FileUtils.deleteFile(new File(DOWNLOAD_DIR));
+                FileUtils.deleteFile(new File(Const.DOWNLOAD_DIR));
                 LogUtil.log("已清空文件!");
                 ThreadUtil.runOnUIThread(() -> {
                     // 清空文件成功 隐藏进度框

@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide;
 import com.zhlee.doplayer.R;
 import com.zhlee.doplayer.base.BaseRecAdapter;
 import com.zhlee.doplayer.base.BaseRecViewHolder;
+import com.zhlee.doplayer.utils.Const;
 import com.zhlee.doplayer.utils.DoX509TrustManager;
 import com.zhlee.doplayer.utils.LogUtil;
 import com.zhlee.doplayer.utils.StringUtils;
@@ -51,9 +52,6 @@ public class OnlinePlayActivity extends AppCompatActivity {
     private int currentPosition;
     private OnlinePlayActivity act;
     private XUtils xUtils;
-
-    // 请求地址
-    public static final String DO_URL = "https://iapp.ddccs.net/api.php";
 
     public static final int MIN_COUNT = 10;
 
@@ -100,8 +98,8 @@ public class OnlinePlayActivity extends AppCompatActivity {
 
     private void startCache() {
         LogUtil.log("开始缓存...");
-        for (int i = 0; i < 10; i++) {
-            xUtils.get(DO_URL, null, null, new XCallBack() {
+        for (int i = 0; i < MIN_COUNT; i++) {
+            xUtils.get(Const.DO_URL, null, null, new XCallBack() {
                 @Override
                 public void onResponse(String result) {
                     // 解析结果 获取视频地址
@@ -203,7 +201,7 @@ public class OnlinePlayActivity extends AppCompatActivity {
                         }
                         currentPosition = position;
 
-                        if (urlList.size() - currentPosition < 10) {
+                        if (urlList.size() - currentPosition < MIN_COUNT) {
                             startCache();
                         }
                         break;
