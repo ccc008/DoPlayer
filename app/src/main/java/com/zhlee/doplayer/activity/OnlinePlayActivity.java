@@ -1,5 +1,6 @@
 package com.zhlee.doplayer.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,26 +18,14 @@ import com.zhlee.doplayer.R;
 import com.zhlee.doplayer.base.BaseRecAdapter;
 import com.zhlee.doplayer.base.BaseRecViewHolder;
 import com.zhlee.doplayer.utils.Const;
-import com.zhlee.doplayer.utils.DoX509TrustManager;
 import com.zhlee.doplayer.utils.LogUtil;
 import com.zhlee.doplayer.utils.StringUtils;
 import com.zhlee.doplayer.utils.XCallBack;
 import com.zhlee.doplayer.utils.XUtils;
 import com.zhlee.doplayer.view.DoVideoPlayer;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -53,6 +42,9 @@ public class OnlinePlayActivity extends AppCompatActivity {
     private OnlinePlayActivity act;
     private XUtils xUtils;
 
+    // 实际播放地址
+    private String doUrl = "";
+
     public static final int MIN_COUNT = 10;
 
     @Override
@@ -63,6 +55,8 @@ public class OnlinePlayActivity extends AppCompatActivity {
         setContentView(R.layout.activity_video);
         // 初始化前的一些准备
         initFirst();
+        // 初始化Intent
+        initIntent();
         // 初始化数据
         initData();
         // 初始化控件
@@ -82,6 +76,13 @@ public class OnlinePlayActivity extends AppCompatActivity {
         xUtils = XUtils.getInstance();
     }
 
+    private void initIntent() {
+        Intent intent = getIntent();
+        if (intent != null) {
+            doUrl = intent.getStringExtra(Const.PLAY_RES_KEY);
+        }
+    }
+
     private void initView() {
         urlList = new ArrayList<>();
         // 开始缓存视频地址 每次10条
@@ -99,26 +100,21 @@ public class OnlinePlayActivity extends AppCompatActivity {
     private void startCache() {
         LogUtil.log("开始缓存...");
         for (int i = 0; i < MIN_COUNT; i++) {
-            xUtils.get(Const.DO_URL, null, null, new XCallBack() {
+            xUtils.get(doUrl, null, null, new XCallBack() {
                 @Override
                 public void onResponse(String result) {
-                    // 解析结果 获取视频地址
-                    String url = StringUtils.parseUrl(result);
+                    String url = "";
+                    if (Const.DO_URL_1.equals(doUrl)) {
+                        // 源1下载中
+                        // 解析结果 获取视频地址
+                        url = StringUtils.parseUrl1(result);
+                    } else if (Const.DO_URL_2.equals(doUrl)) {
+                        // 源2下载中
+                        // 解析结果 获取视频地址
+                        url = StringUtils.parseUrl2(result);
+                    }
                     if (!TextUtils.isEmpty(url)) {
-                        xUtils.head(url, null, null, new XCallBack() {
-                            @Override
-                            public void onResponse(String result) {
-                                LogUtil.log("文件地址可用::" + result);
-                                urlList.add(url);
-                                videoAdapter.notifyDataSetChanged();
-                            }
-
-                            @Override
-                            public void onError(Throwable throwable) {
-                                LogUtil.log("文件地址不可用::" + url);
-                                LogUtil.log("文件地址不可用异常::" + throwable.getMessage());
-                            }
-                        });
+                        isActive(url);
                     } else {
                         LogUtil.log("获取的地址为空!");
                     }
@@ -135,42 +131,23 @@ public class OnlinePlayActivity extends AppCompatActivity {
     /**
      * 判断文件是否存在
      *
-     * @param httpPath
      * @return
      */
-    private static Boolean isActive(String httpPath) {
-        boolean isActive = false;
-        try {
-            SSLContext sslcontext = SSLContext.getInstance("SSL");//第一个参数为协议,第二个参数为提供者(可以缺省)
-            TrustManager[] tm = {new DoX509TrustManager()};
-            sslcontext.init(null, tm, new SecureRandom());
-            HostnameVerifier ignoreHostnameVerifier = (s, sslSession) -> {
-                LogUtil.log("WARNING: Hostname is not matched for cert.");
-                return true;
-            };
-            HttpsURLConnection.setDefaultHostnameVerifier(ignoreHostnameVerifier);
-            HttpsURLConnection.setDefaultSSLSocketFactory(sslcontext.getSocketFactory());
-            URL url = new URL(httpPath);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            if (conn.getResponseCode() >= 400) {
-                LogUtil.log("文件不存在");
-                isActive = false;
-            } else {
-                LogUtil.log("文件存在");
-                isActive = true;
+    private void isActive(String url) {
+        xUtils.head(url, null, null, new XCallBack() {
+            @Override
+            public void onResponse(String result) {
+                LogUtil.log("文件地址可用::" + result);
+                urlList.add(url);
+                videoAdapter.notifyDataSetChanged();
             }
-            conn.disconnect();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            LogUtil.log("1::" + e);
-        } catch (KeyManagementException e) {
-            e.printStackTrace();
-            LogUtil.log("2::" + e);
-        } catch (IOException e) {
-            e.printStackTrace();
-            LogUtil.log("3::" + e);
-        }
-        return isActive;
+
+            @Override
+            public void onError(Throwable throwable) {
+                LogUtil.log("文件地址不可用::" + url);
+                LogUtil.log("文件地址不可用异常::" + throwable.getMessage());
+            }
+        });
     }
 
 
@@ -231,6 +208,10 @@ public class OnlinePlayActivity extends AppCompatActivity {
             ViewGroup.LayoutParams layoutParams = holder.itemView.getLayoutParams();
             layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
 
+            // 设置当前位置
+            holder.mp_video.setCurrentPosition(position);
+            // 在线播放
+            holder.mp_video.setPlayType(Const.PLAY_TYPE_ONLINE);
             holder.mp_video.setUp(bean, "第" + position + "个视频", DoVideoPlayer.STATE_NORMAL);
             if (position == 0) {
                 holder.mp_video.startVideo();

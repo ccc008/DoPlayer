@@ -16,10 +16,12 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
+import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.zhlee.doplayer.R;
+import com.zhlee.doplayer.bean.FavoriteBean;
 import com.zhlee.doplayer.bean.VideoBean;
 import com.zhlee.doplayer.utils.Const;
 import com.zhlee.doplayer.utils.FileUtils;
@@ -41,8 +43,10 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    @BindView(R.id.btn_start)
-    Button btnStart;
+    @BindView(R.id.btn_start_1)
+    Button btnStart1;
+    @BindView(R.id.btn_start_2)
+    Button btnStart2;
     @BindView(R.id.btn_stop)
     Button btnStop;
     @BindView(R.id.btn_clear_db)
@@ -55,8 +59,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button btnOpenLocalAsc;
     @BindView(R.id.btn_open_local_shuffle)
     Button btnOpenLocalShuffle;
-    @BindView(R.id.btn_open_online)
-    Button btnOpenOnline;
+    @BindView(R.id.btn_favor)
+    Button btnFavor;
+    @BindView(R.id.btn_open_online_1)
+    Button btnOpenOnline1;
+    @BindView(R.id.btn_open_online_2)
+    Button btnOpenOnline2;
 
     // 要申请的权限
     private String[] permissions = {
@@ -90,14 +98,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initListener() {
-        btnStart.setOnClickListener(this);
+        btnStart1.setOnClickListener(this);
+        btnStart2.setOnClickListener(this);
         btnStop.setOnClickListener(this);
         btnOpenLocalDesc.setOnClickListener(this);
         btnOpenLocalAsc.setOnClickListener(this);
         btnOpenLocalShuffle.setOnClickListener(this);
         btnClearDb.setOnClickListener(this);
         btnClearAll.setOnClickListener(this);
-        btnOpenOnline.setOnClickListener(this);
+        btnOpenOnline1.setOnClickListener(this);
+        btnOpenOnline2.setOnClickListener(this);
+        btnFavor.setOnClickListener(this);
     }
 
     private void initData() {
@@ -116,9 +127,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             xUtils.get(Const.DO_URL, null, null, new XCallBack() {
                 @Override
                 public void onResponse(String result) {
-                    // 解析结果 获取视频地址
-                    String url = StringUtils.parseUrl(result);
-                    if (!TextUtils.isEmpty(url)) {
+                    String url = "";
+                    if (Const.DO_URL.equals(Const.DO_URL_1)) {
+                        // 源1下载中
+                        // 解析结果 获取视频地址
+                        url = StringUtils.parseUrl1(result);
+                    } else if (Const.DO_URL.equals(Const.DO_URL_2)) {
+                        // 源2下载中
+                        // 解析结果 获取视频地址
+                        url = StringUtils.parseUrl2(result);
+                    }
+                    if (!TextUtils.isEmpty(url) && (URLUtil.isHttpUrl(url) || URLUtil.isHttpsUrl(url))) {
                         // 判断当前视频地址是否已经存储到数据库中
                         List<VideoBean> videoBeans = DataSupport.where("url = ?", url).find(VideoBean.class);
                         if (videoBeans != null && videoBeans.size() > 0) {
@@ -273,14 +292,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.btn_start:
+            // 启动源1下载
+            case R.id.btn_start_1:
                 if (!isDownloading) {
-                    LogUtil.log("启动下载...");
+                    LogUtil.log("启动源1下载...");
                     isDownloading = true;
+                    Const.DO_URL = Const.DO_URL_1;
                     // 获取视频地址
                     getVideoUrl();
                 } else {
-                    LogUtil.log("下载中...");
+                    LogUtil.log("源1下载中...");
+                }
+                break;
+            // 启动源2下载
+            case R.id.btn_start_2:
+                if (!isDownloading) {
+                    LogUtil.log("启动源2下载...");
+                    isDownloading = true;
+                    Const.DO_URL = Const.DO_URL_2;
+                    // 获取视频地址
+                    getVideoUrl();
+                } else {
+                    LogUtil.log("源2下载中...");
                 }
                 break;
             case R.id.btn_stop:
@@ -313,9 +346,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 intentShuffle.putExtra(Const.PLAY_ORDER_KEY, Const.PLAY_ORDER_SHUFFLE);
                 startActivity(intentShuffle);
                 break;
-            case R.id.btn_open_online:
-                LogUtil.log("启动在线播放...");
-                startActivity(new Intent(act, OnlinePlayActivity.class));
+            case R.id.btn_favor:
+                LogUtil.log("启动本地播放-收藏...");
+                Intent intentFavor = new Intent(act, LocalPlayActivity.class);
+                intentFavor.putExtra(Const.PLAY_ORDER_KEY, Const.PLAY_ORDER_FAVOR);
+                startActivity(intentFavor);
+                break;
+            case R.id.btn_open_online_1:
+                LogUtil.log("启动源1在线播放...");
+                Intent onlineIntent1 = new Intent(act, OnlinePlayActivity.class);
+                onlineIntent1.putExtra(Const.PLAY_RES_KEY, Const.DO_URL_1);
+                startActivity(onlineIntent1);
+                break;
+            case R.id.btn_open_online_2:
+                LogUtil.log("启动源2在线播放...");
+                Intent onlineIntent2 = new Intent(act, OnlinePlayActivity.class);
+                onlineIntent2.putExtra(Const.PLAY_RES_KEY, Const.DO_URL_2);
+                startActivity(onlineIntent2);
                 break;
         }
     }
@@ -325,7 +372,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         builder.setTitle("警告");
         builder.setMessage("你确定要清空数据库么？");
         builder.setPositiveButton("确定", (dialogInterface, i) -> {
+            // 清空已下载数据库
             DataSupport.deleteAll(VideoBean.class);
+            // 清空我的收藏数据库
+            DataSupport.deleteAll(FavoriteBean.class);
             LogUtil.log("已清空数据库!");
             ToastUtils.showToast(act, "已清空数据库!");
         });
@@ -343,7 +393,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             // 开始清空文件 显示进度框
             showProgressDialog("标题", "正在清空数据...");
             ThreadUtil.runOnBackThread(() -> {
+                // 清空已下载数据库
                 DataSupport.deleteAll(VideoBean.class);
+                // 清空我的收藏数据库
+                DataSupport.deleteAll(FavoriteBean.class);
                 LogUtil.log("已清空数据库!");
                 FileUtils.deleteFile(new File(Const.DOWNLOAD_DIR));
                 LogUtil.log("已清空文件!");

@@ -1,6 +1,9 @@
 package com.zhlee.doplayer.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -16,11 +19,15 @@ import com.bumptech.glide.Glide;
 import com.zhlee.doplayer.R;
 import com.zhlee.doplayer.base.BaseRecAdapter;
 import com.zhlee.doplayer.base.BaseRecViewHolder;
+import com.zhlee.doplayer.bean.FavoriteBean;
 import com.zhlee.doplayer.utils.Const;
 import com.zhlee.doplayer.utils.ScanUtil;
 import com.zhlee.doplayer.view.DoVideoPlayer;
 
+import org.litepal.crud.DataSupport;
+
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,6 +46,8 @@ public class LocalPlayActivity extends AppCompatActivity {
     private LocalPlayActivity act;
     // 播放顺序
     private String playKey;
+    // 单条视频删除监听
+    private BroadcastReceiver videoDeleteReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,22 +93,33 @@ public class LocalPlayActivity extends AppCompatActivity {
 
     private void initView() {
         File file = new File(Const.DOWNLOAD_DIR);
-        urlList = ScanUtil.getVideoList(file);
-
-        if (Const.PLAY_ORDER_ASC.equalsIgnoreCase(playKey)) {
-            // 正序播放
-            Collections.sort(urlList);
-        } else if (Const.PLAY_ORDER_DESC.equalsIgnoreCase(playKey)) {
-            // 倒序播放
-            Collections.sort(urlList);
-            Collections.reverse(urlList);
-        } else if (Const.PLAY_ORDER_SHUFFLE.equalsIgnoreCase(playKey)) {
-            // 随机播放
+        if (Const.PLAY_ORDER_FAVOR.equalsIgnoreCase(playKey)) {
+            // 我的收藏 随机播放
+            urlList = new ArrayList<>();
+            urlList.clear();
+            List<FavoriteBean> favoriteBeans = DataSupport.findAll(FavoriteBean.class);
+            for (FavoriteBean favoriteBean : favoriteBeans) {
+                urlList.add(favoriteBean.getUrl());
+            }
             Collections.shuffle(urlList);
         } else {
-            // 默认倒序播放
-            Collections.sort(urlList);
-            Collections.reverse(urlList);
+            // 全部播放 获取全部的文件
+            urlList = ScanUtil.getVideoList(file);
+            if (Const.PLAY_ORDER_ASC.equalsIgnoreCase(playKey)) {
+                // 正序播放
+                Collections.sort(urlList);
+            } else if (Const.PLAY_ORDER_DESC.equalsIgnoreCase(playKey)) {
+                // 倒序播放
+                Collections.sort(urlList);
+                Collections.reverse(urlList);
+            } else if (Const.PLAY_ORDER_SHUFFLE.equalsIgnoreCase(playKey)) {
+                // 随机播放
+                Collections.shuffle(urlList);
+            } else {
+                // 默认倒序播放
+                Collections.sort(urlList);
+                Collections.reverse(urlList);
+            }
         }
 
         snapHelper = new PagerSnapHelper();
@@ -145,6 +165,27 @@ public class LocalPlayActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // 注册单条视频删除广播
+        videoDeleteReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int position = -1;
+                if (intent != null) {
+                    position = intent.getIntExtra(Const.VIDEO_DELETE_POSITON_KEY, -1);
+                }
+                if (position > -1) {
+                    // 说明确实删除了视频
+                    // 移除该条视频
+                    urlList.remove(position);
+                    // 通知adapter刷新列表
+                    if (videoAdapter != null) {
+                        videoAdapter.notifyItemRemoved(position);
+                    }
+                }
+            }
+        };
+        registerReceiver(videoDeleteReceiver, new IntentFilter(Const.ACTION_DELETE_SINGLE_VIDEO));
     }
 
     @Override
@@ -164,6 +205,10 @@ public class LocalPlayActivity extends AppCompatActivity {
             ViewGroup.LayoutParams layoutParams = holder.itemView.getLayoutParams();
             layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
 
+            // 设置当前位置
+            holder.mp_video.setCurrentPosition(position);
+            // 本地播放
+            holder.mp_video.setPlayType(Const.PLAY_TYPE_LOCAL);
             holder.mp_video.setUp(bean, "第" + position + "个视频", DoVideoPlayer.STATE_NORMAL);
             if (position == 0) {
                 holder.mp_video.startVideo();
@@ -188,6 +233,16 @@ public class LocalPlayActivity extends AppCompatActivity {
             this.rootView = rootView;
             this.mp_video = rootView.findViewById(R.id.mp_video);
             this.tv_title = rootView.findViewById(R.id.tv_title);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 取消注册
+        if (videoDeleteReceiver != null) {
+            unregisterReceiver(videoDeleteReceiver);
+            videoDeleteReceiver = null;
         }
     }
 }
